@@ -30,7 +30,7 @@ class LoginView(APIView):
                         'user_id': user.id,
                         'username': user.username,
                         'photo': user_profile.photo.url,  # 必须加url
-                        'profile': 'user_profile.profile',
+                        'profile':user_profile.profile,
                     }
                 )
                 response.set_cookie(
@@ -41,16 +41,17 @@ class LoginView(APIView):
                         secure=True,
                         max_age=86400*7,
                 )
-                return Response
+                return response
             return Response(
                 {
-                    'result':'用户名或密码错误',
-
+                    'result':'用户名或密码错误'
                 }
             )
         except:
+            import traceback
+            print(traceback.format_exc())
             return Response(
                 {
-                    'result':'系统异常，请稍后从试'
+                    'result':'系统异常，请稍后重试'
                 }
             )

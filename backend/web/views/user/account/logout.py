@@ -4,14 +4,14 @@ from rest_framework.permissions import IsAuthenticated
 
 
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticated], #强制登录才能访问
+    # permission_classes = [IsAuthenticated] #强制登录才能访问
     def post(self,request):
         response=Response(
             {
                 'result':'success'
             }
         )
-        response.delete_cookie('refresh_token'),
+        response.delete_cookie('refresh_token')
         return response
 
 
