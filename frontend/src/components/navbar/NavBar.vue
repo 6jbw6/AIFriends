@@ -20,7 +20,7 @@ const user=useUserStore()
         <label for="my-drawer-4" aria-label="open sidebar" class="btn btn-square btn-ghost">
                 <MenuIcon/>
         </label>
-        <div class="px-2" font-bold text-2xl>AIFriends</div>
+        <div class="px-2 font-bold text-xl">AIFriends</div>
       </div>
       <div class="navbar-center w-4/5 max-w-180 flex jp-CaretDownEmptyIcon">
       <div class="join w-4/5 flex jp-CaretDownEmptyIcon">
@@ -36,10 +36,10 @@ const user=useUserStore()
           <CreateIcon/>
           创作
         </RouterLink>
-        <RouterLink v-if="!user.isLogin()" :to="{name:'user-account-login-index'}" active-class="btn-active" class="btn btn-ghost" text-lg>
+        <RouterLink v-if="user.hasPulledUserInfo&&!user.isLogin()" :to="{name:'user-account-login-index'}" active-class="btn-active" class="btn btn-ghost" text-lg>
           登录
         </RouterLink>
-        <UserMenu v-else/>
+        <UserMenu v-else-if="user.isLogin()"/>
       </div>
     </nav>
     <slot>
