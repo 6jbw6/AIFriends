@@ -13,9 +13,9 @@ class UpdateProfileView(APIView):
     def post(self,request):
         try:
             user=request.user
-            user_profile=UserProfile.objects.get(user=user)
-            username=request.data['username'].strip()
-            profile=request.data['profile'].strip()[:500]
+            user_profile, created=UserProfile.objects.get_or_create(user=user)
+            username=request.data.get('username', '').strip()
+            profile=request.data.get('profile', '').strip()[:500]
             photo=request.FILES.get('photo',None)
             if not username:
                 return Response({
@@ -45,7 +45,9 @@ class UpdateProfileView(APIView):
                 'photo':user_profile.photo.url,
             })
 
-        except:
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
             return Response({
-                'result':'系统异常,请稍后重试'
+                'result': f'系统异常,请稍后重试: {str(e)}'
             })

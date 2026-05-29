@@ -1,8 +1,18 @@
 {
   "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
   },
+  "include": [
+    "auto-imports.d.ts",
+    "components.d.ts",
+    "src/**/*.js",
+    "src/**/*.vue"
+  ],
   "exclude": ["node_modules", "dist"]
 }
