@@ -12,6 +12,9 @@ class RemoveCharacterView(APIView):
         try:
             character_id=request.data['character_id']
             Character.objects.filter(id=character_id,author__user=request.user).delete()
+            return Response({
+                'result':'success',
+            })
 
         except:
             return Response({
