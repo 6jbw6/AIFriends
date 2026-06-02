@@ -16,7 +16,7 @@ class CreateCharacterView(APIView):
             name=request.data['name'].strip()
             profile=request.data['profile'].strip()[:100000]
             photo=request.FILES.get('photo',None)
-            background_image=request.FILES.get('background',None)
+            background_image=request.FILES.get('background_image',None)
             if not name:
                 return Response({
                     'result':'名字不能为空'
