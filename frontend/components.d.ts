@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    Character: typeof import('./src/components/character/Character.vue')['default']
     CreateIcon: typeof import('./src/components/navbar/icons/CreateIcon.vue')['default']
     FriendIcon: typeof import('./src/components/navbar/icons/FriendIcon.vue')['default']
     HomepageIcon: typeof import('./src/components/navbar/icons/HomepageIcon.vue')['default']
