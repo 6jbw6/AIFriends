@@ -9,6 +9,11 @@ const hasCharacters=ref(true)
 const sentinelRef=useTemplateRef('sentinel-ref')
 const route=useRoute()
 
+function removeCharacter(characterId)
+{
+  characters.value=characters.value.filter(c=>c.id!==characterId)
+
+}
 function checkSentinelVisible() {  // 判断哨兵是否能被看到
   if (!sentinelRef.value) return false
 
@@ -30,16 +35,15 @@ async function loadMore()
                 user_id:route.params.user_id,
               }
         })
-    const data=res.data
+    const data = res.data;
     if(data.result==='success')
     {
       userProfile.value=data.user_profile
       newCharacters=data.characters
     }
   }
-  catch(err)
-  {
-    console.log(err)
+  catch(err){
+
   }
   finally {
     isLoading.value=false
@@ -86,8 +90,15 @@ onBeforeUnmount(()=>
 <div class="flex flex-col items-center mb-12 ">
   <UserInfoField :userProfile="userProfile"/>
   <div class="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-9 mt-12 justify-items-center w-full px-9">
+    <Character
+      v-for="character in characters"
+      :key="character.id"
+      :character="character"
+      :canEdit="true"
+      @remove="removeCharacter"
+    />
   </div>
-  <div ref="sentinel-ref" class="h-2 mt-8 w-100 bg-red-500"></div>
+  <div ref="sentinel-ref" class="h-2 mt-8 "></div>
   <div v-if="isLoading" class="text-gray-500 mt-4">加载中...</div>
   <div v-else-if="!hasCharacters" class="text-gray-500 mt-4">没有更多角色了</div>
 </div>
