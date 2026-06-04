@@ -12,7 +12,7 @@ class GetListCjaracterView(APIView):
             items_count=int(request.query_params.get('items_count'))
             user_id=int(request.query_params.get('user_id'))
             user=User.objects.get(id=user_id)
-            user_profile, _ = UserProfile.objects.get_or_create(user=user)
+            user_profile = UserProfile.objects.get(user=user)
             characters_raw=Character.objects.filter(
                 author=user_profile
             ).order_by('-id')[items_count:items_count+20]
@@ -50,5 +50,4 @@ class GetListCjaracterView(APIView):
             print("GetListCjaracterView Error:", repr(e))
             return Response({
                 'result':'系统异常,请稍后重试',
-                'error': str(e)
             })
