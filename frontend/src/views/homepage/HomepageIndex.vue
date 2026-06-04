@@ -5,6 +5,17 @@ const characters=ref([])
 const isLoading=ref(false)
 const hasCharacters=ref(true)
 const sentinelRef=useTemplateRef('sentinel-ref')
+const route=useRoute()
+function reset()
+{
+  characters.value=[]
+  isLoading.value=false
+  hasCharacters.value=true
+  loadMore()
+}
+watch(()=>route.query.q,newQ=>{
+  reset()
+})
 
 function checkSentinelVisible() {  // 判断哨兵是否能被看到
   if (!sentinelRef.value) return false
@@ -24,6 +35,7 @@ async function loadMore()
             params:
                 {
                   items_count:characters.value.length,
+                  search_query:route.query.q||' ',
                 }
           })
     const data=res.data
