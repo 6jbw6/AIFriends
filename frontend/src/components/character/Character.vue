@@ -24,16 +24,48 @@ async function handleRemoveCharacter()
    {
    }
 }
+const chatFieldRef=useTemplateRef('chat-field-ref')
+const friend=ref(null)
+const router=useRouter()
+async function openChatField()
+{
+    if(!user.isLogin())
+    {
+      await router.push({
+        name:'user-account-login-index'
+      })
+    }
+    else
+    {
+      try
+      {
+          const res=await api.post('api/friend/get_or_create/',
+              {
+                character_id:props.character.id,
+              })
+        const data=res.data
+        if(data.result==='success')
+        {
+          friend.value=data.friend
+          chatFieldRef.value.showModal()
+        }
+      }
+      catch(err)
+      {
+        console.log(err)
+      }
+    }
+}
 </script>
 
 <template>
 <div>
-  <div class="avatar cursor-pointer" @mouseover="isHover=true" @mouseout="isHover=false">
+  <div class="avatar cursor-pointer" @mouseover="isHover=true" @mouseout="isHover=false" @click="openChatField">
       <div class="w-60 h-100 rounded-2xl relative">
         <img :src="character.background_image" class="transition-transform duration-300" :class="{'scale-120':isHover}" alt="">
         <div class="absolute left-0 top-50 w-60 h-50 bg-linear-to-t from-black/40 to-transparent"></div>
         <div v-if="canEdit&&character.author.user_id===user.id" class="absolute right-0 top-50">
-          <RouterLink :to="{name:'update-character',params:{character_id:character.id}}" class="btn btn-circle btn-ghost bg-transparent">
+          <RouterLink @click.stop :to="{name:'update-character',params:{character_id:character.id}}" class="btn btn-circle btn-ghost bg-transparent">
             <UpdateIcon/>
             </RouterLink>
           <button @click="handleRemoveCharacter()" class="btn btn-ghost  btn-circle bg-transparent">
@@ -63,6 +95,7 @@ async function handleRemoveCharacter()
     </div>
     <div class="text-sm line-clamp-1 break-all">{{character.author.username}}</div>
   </RouterLink>
+  <ChatField ref="chat-field-ref" :friend="friend"/>
 </div>
 </template>
 
