@@ -3,7 +3,7 @@ import {useUserStore} from "@/stores/user.js";
 import UpdateIcon from "@/components/character/icons/UpdateIcon.vue";
 import RemoveIcon from "@/components/character/icons/RemoveIcon.vue";
 import api from "@/js/http/api.js";
-const props=defineProps(['character','canEdit'])
+const props=defineProps(['character','canEdit','canRemoveFriend','friendId'])
 const isHover=ref(false)
 const user=useUserStore()
 const emit=defineEmits(['remove'])
@@ -52,9 +52,25 @@ async function openChatField()
       }
       catch(err)
       {
-        console.log(err)
       }
     }
+}
+async function handleRemoveFriend()
+{
+  try
+  {
+    const res=await api.post('api/friend/remove/',
+        {
+          friend_id:props.friendId,
+        })
+    if(res.data.result==='success')
+    {
+      emit('remove',props.friendId)
+    }
+  }
+  catch(err)
+  {
+  }
 }
 </script>
 
@@ -68,7 +84,12 @@ async function openChatField()
           <RouterLink @click.stop :to="{name:'update-character',params:{character_id:character.id}}" class="btn btn-circle btn-ghost bg-transparent">
             <UpdateIcon/>
             </RouterLink>
-          <button @click="handleRemoveCharacter()" class="btn btn-ghost  btn-circle bg-transparent">
+          <button @click.stop="handleRemoveCharacter()" class="btn btn-ghost  btn-circle bg-transparent">
+            <RemoveIcon/>
+          </button>
+        </div>
+        <div v-if="canRemoveFriend" class="absolute right-0 top-50">
+          <button @click.stop="handleRemoveFriend" class="btn btn-ghost btn-circle bg-transparent">
             <RemoveIcon/>
           </button>
         </div>
