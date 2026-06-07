@@ -1,14 +1,22 @@
-from langchain_classic.agents.chat.prompt import HUMAN_MESSAGE
+import json
+from django.http import StreamingHttpResponse
+from langchain_core.messages import HumanMessage, BaseMessage, BaseMessageChunk
+from rest_framework.renderers import BaseRenderer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from web.models.friend import Friend
 from web.views.message.chat.graph import ChatGraph
-
+class SSERenderer(BaseRenderer):
+    media_type = 'text/event-stream'
+    format = 'txt'
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return data
 
 class MessageChatView(APIView):
     permission_classes = [IsAuthenticated]
+    renderer_classes = [SSERenderer]
     def post(self,request):
         friend_id = request.data.get('friend_id')
         message = request.data.get('message').strip()
@@ -24,10 +32,19 @@ class MessageChatView(APIView):
         friend=friends.first()
         app=ChatGraph.create_app()
         inputs={
-            'messages':[HUMAN_MESSAGE[message]]
+            'messages':[HumanMessage(content=message)]
         }
-        res=app.invoke(inputs)
-        print(res['messages'][-1].content)
-        return Response({
-            'result':'success'
-        })
+        def event_stream():
+            full_usage={}
+            for msg,metadata in app.stream(inputs,stream_mode="messages"):
+                if isinstance(msg,BaseMessageChunk):
+                    if msg.content:
+                        yield f'data:{json.dumps({'content':msg.content},ensure_ascii=False)}\n\n'
+                    if hasattr(msg,'usage_metadata') and msg.usage_metadata:
+                        full_usage=msg.usage_metadata
+            yield 'data:[DONE]\n\n'
+            print(full_usage)
+
+        response = StreamingHttpResponse(event_stream(), content_type="text/event-stream")
+        response['Cache-Control'] = 'no-cache'
+        return response
