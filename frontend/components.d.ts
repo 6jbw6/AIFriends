@@ -17,7 +17,7 @@ declare module 'vue' {
     CreateIcon: typeof import('./src/components/navbar/icons/CreateIcon.vue')['default']
     FriendIcon: typeof import('./src/components/navbar/icons/FriendIcon.vue')['default']
     HomepageIcon: typeof import('./src/components/navbar/icons/HomepageIcon.vue')['default']
-    InputField: typeof import('./src/components/character/chat_field/input_filed/InputField.vue')['default']
+    InputField: typeof import('./src/components/character/chat_field/input_field/InputField.vue')['default']
     MenuIcon: typeof import('./src/components/navbar/icons/MenuIcon.vue')['default']
     MicIcon: typeof import('./src/components/character/icons/MicIcon.vue')['default']
     NavBar: typeof import('./src/components/navbar/NavBar.vue')['default']

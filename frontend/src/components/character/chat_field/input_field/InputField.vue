@@ -17,9 +17,9 @@ defineExpose({
 async function handleSend()
 {
   if(isProcessing) return
-  isProcessing=true
   const content=message.value.trim()
   if(!content) return
+  isProcessing=true
   message.value=''
   try
   {
