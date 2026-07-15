@@ -9,7 +9,7 @@ defineProps(['character'])
       <img :src="character.photo" alt="">
     </div>
   </div>
-  <div class="text-while text-sm line-clamp-1 break-all">
+  <div class="text-white text-sm line-clamp-1 break-all">
     {{character.name}}
   </div>
 </div>

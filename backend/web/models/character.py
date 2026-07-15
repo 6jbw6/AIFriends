@@ -22,6 +22,6 @@ class Character(models.Model):
     profile=models.TextField(max_length=100000)
     background_image=models.ImageField(upload_to=background_image_upload_to)
     create_time=models.DateTimeField(default=now)
-    update_time=models.DateTimeField(auto_now=now)
+    update_time=models.DateTimeField(auto_now=True)
     def __str__(self):
         return f"{self.author.user.username} - {self.name} - {localtime(self.create_time).strftime('%Y-%m-%d %H:%M:%S')}"
