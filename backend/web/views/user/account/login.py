@@ -14,7 +14,7 @@ class LoginView(APIView):
         try:
             username = request.data['username'].strip()
             password = request.data['password'].strip()
-            if not(username or password):
+            if not username or not password:
                 return Response(
                     {
                         'result':'用户名和密码不能为空'
