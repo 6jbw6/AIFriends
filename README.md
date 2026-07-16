@@ -1,10 +1,10 @@
 # AI Friends 🤖💬
 
-> **一个支持自定义人设、长期记忆、语音交互的 AI 虚拟角色陪伴平台。(开发中)**
+> **一个支持自定义人设、长期记忆、工具调用与 RAG 知识库的 AI 虚拟角色陪伴平台。(开发中)**
 
-AI Friends 是一个基于大语言模型的前后端分离 Web 应用。用户可以创建具备独特人设与背景故事的 AI 虚拟好友,并与他们进行实时流式对话。项目正在持续开发中,目标是构建包含长期记忆、RAG 知识库增强与实时语音交互的完整陪伴体验。
+AI Friends 是一个基于大语言模型的前后端分离 Web 应用。用户可以创建具备独特人设与背景故事的 AI 虚拟好友,并与他们进行实时流式对话。AI 会随着聊天自动积累对用户的长期记忆,能够调用工具(如查询时间、检索知识库),并在回复中融入检索到的领域知识。
 
-> 本项目为个人学习项目,全部代码手写完成,用于系统学习 LLM 应用开发(LangChain / LangGraph / RAG / 流式传输)与全栈工程实践。
+> 本项目为个人学习项目,全部代码手写完成,用于系统学习 LLM 应用开发(LangChain / LangGraph / Agent / RAG / 流式传输)与全栈工程实践。
 
 ---
 
@@ -12,19 +12,19 @@ AI Friends 是一个基于大语言模型的前后端分离 Web 应用。用户�
 
 ### 已完成
 
-- **🔐 完整的账号体系**:基于 JWT (simplejwt) 的注册、登录、登出与无感刷新 Token(refresh token 存 HttpOnly Cookie);个人中心支持修改用户名、简介与头像上传。
-- **🎭 个性化 AI 角色创建**:自定义角色名称、头像、背景图与系统设定 (Profile),支持创建、编辑、删除自己的角色。
-- **🌐 角色广场**:分页浏览全站公开的 AI 角色,一键添加为好友。
-- **👥 好友系统**:添加 / 移除 AI 好友,管理我的好友列表。
-- **💬 流式对话**:基于 LangGraph 构建对话流,AI 回复通过 SSE (Server-Sent Events) 流式传输,前端逐字渲染。
+- **🔐 完整的账号体系**:基于 JWT (simplejwt) 的注册、登录、登出与无感刷新 Token(access token 存于前端、refresh token 存 HttpOnly Cookie,支持 Token 轮换);个人中心支持修改用户名、简介与头像上传(前端集成 Croppie 裁剪)。
+- **🎭 个性化 AI 角色创建**:自定义角色名称、头像、背景图与系统人设 (Profile),支持创建、编辑、删除自己的角色。
+- **🌐 角色广场**:分页浏览全站公开的 AI 角色,支持按名称 / 简介关键词搜索,一键添加为好友。
+- **👥 好友系统**:添加 / 移除 AI 好友,管理我的好友列表(按最近互动排序)。
+- **💬 流式对话 (Streaming)**:基于 LangGraph 构建对话流,AI 回复通过 SSE (Server-Sent Events) 流式传输,前端逐字渲染;每轮对话入库,并统计输入 / 输出 / 总 Token 消耗。
+- **🕘 对话历史持久化**:消息落库存储,支持基于游标 (`last_message_id`) 的历史记录分页加载。
+- **🛠️ 工具调用 (Function Calling)**:采用 LangGraph 的 ReAct 循环(`agent ⇄ tools`),角色可自主决定是否调用工具。内置「查询当前时间」与「检索知识库」两个工具。
+- **🧠 长期记忆**:每累积 10 条对话,后台自动将「原有记忆 + 最近 10 轮对话」交给 LLM 提炼,更新并持久化 AI 对用户的「认知」(存于 `Friend.memory`),下轮对话自动注入系统提示。
+- **📚 知识库增强 (RAG)**:接入 LanceDB 向量数据库,通过自定义 Embedding(阿里云 `text-embedding-v4`)将文档切片入库,对话时按语义相似度检索 Top-3 片段注入上下文。
 
 ### 开发中 (Roadmap)
 
-- [ ] **对话历史持久化**:消息入库与历史记录查询,Token 消耗统计
-- [ ] **Function Call**:让角色具备调用外部工具的能力
-- [ ] **🧠 长期记忆**:后台自动总结对话关键信息,持续更新 AI 对用户的"认知"
-- [ ] **📚 知识库增强 (RAG)**:接入 LanceDB 向量数据库,为角色注入领域知识
-- [ ] **🗣️ 语音交互**:实时语音识别 (ASR) 输入 + 流式语音合成 (TTS) 播放,自由选择音色
+- [ ] **🗣️ 语音交互**:实时语音识别 (ASR) 输入 + 流式语音合成 (TTS) 播放,自由选择音色(输入框已预留麦克风入口,逻辑待接入)。
 
 ---
 
@@ -32,25 +32,62 @@ AI Friends 是一个基于大语言模型的前后端分离 Web 应用。用户�
 
 ### 前端 (Frontend)
 
-- **核心框架**:[Vue 3](https://vuejs.org/) (Composition API) + [Vite](https://vitejs.dev/)
-- **状态管理 & 路由**:[Pinia](https://pinia.vuejs.org/) + Vue Router
-- **UI & 样式**:[Tailwind CSS](https://tailwindcss.com/) + [DaisyUI](https://daisyui.com/)
-- **网络与通信**:`axios` + `@microsoft/fetch-event-source` (SSE 流式响应)
+- **核心框架**:[Vue 3](https://vuejs.org/) (Composition API `<script setup>`) + [Vite](https://vitejs.dev/)
+- **状态管理 & 路由**:[Pinia](https://pinia.vuejs.org/) + [Vue Router](https://router.vuejs.org/)(带登录守卫)
+- **UI & 样式**:[Tailwind CSS v4](https://tailwindcss.com/)(CSS-first 配置)+ [DaisyUI](https://daisyui.com/)
+- **网络与通信**:`axios`(REST,含 401 自动刷新 Token 拦截器)+ `@microsoft/fetch-event-source`(SSE 流式响应)
+- **工程化**:`unplugin-auto-import` + `unplugin-vue-components`(API / 组件自动导入);构建产物直接输出到后端静态目录
 
 ### 后端 (Backend)
 
 - **核心框架**:[Django](https://www.djangoproject.com/) + Django REST Framework (DRF)
-- **AI & Agent**:[LangChain](https://python.langchain.com/) + [LangGraph](https://langchain-ai.github.io/langgraph/),通过 OpenAI 兼容接口调用大模型(默认对接阿里云百炼 / 通义千问,可替换为任意兼容 OpenAI 格式的服务)
+- **AI & Agent**:[LangChain](https://python.langchain.com/) + [LangGraph](https://langchain-ai.github.io/langgraph/),通过 OpenAI 兼容接口调用大模型
+- **向量检索 (RAG)**:[LanceDB](https://lancedb.com/) + 自定义 Embedding(`text-embedding-v4`)
+- **大模型**:对话默认使用 `deepseek-v4-pro`,可替换为任意兼容 OpenAI 格式的服务(默认对接阿里云百炼 / DashScope)
 - **数据库**:SQLite(开发环境)
 - **认证**:`djangorestframework-simplejwt`
 
 ---
 
+## 🧩 对话链路(核心流程)
+
+```
+用户发送消息
+      │
+      ▼
+MessageChatView (SSE)
+      │  组装输入:System(全局回复提示 + 角色人设 + 长期记忆)
+      │           + 最近 10 轮历史对话
+      │           + 当前用户消息
+      ▼
+LangGraph ReAct Agent ──► [agent 节点] ChatOpenAI(deepseek-v4-pro, streaming)
+      │                          │  是否需要工具?
+      │            ┌─────────────┴─────────────┐
+      │           否                            是
+      │            │                            ▼
+      │            │                     [tools 节点]
+      │            │              get_time / search_knowledge_base(LanceDB)
+      │            │                            │
+      │            ▼                            └──► 回到 agent
+      │      逐 Token 通过 SSE 流式返回前端
+      ▼
+流结束 → 消息入库(含 Token 统计)
+      → 若累计消息数为 10 的倍数,触发长期记忆更新
+```
+
+---
+
 ## 📁 核心数据模型
 
-- `UserProfile`:用户资料,与 Django User 一对一关联(头像、简介)。
-- `Character`:AI 角色(创作者、名称、头像、系统设定、背景图)。
-- `Friend`:用户与角色的好友关系,后续将在此存储专属长期记忆。
+| 模型 | 说明 | 关键字段 |
+|------|------|------|
+| `UserProfile` | 用户资料,与 Django `User` 一对一关联 | `photo`(头像)、`profile`(简介) |
+| `Character` | AI 角色 | `author`(创作者 FK)、`name`、`profile`(人设)、`photo`、`background_image` |
+| `Friend` | 用户与角色的好友关系,承载专属长期记忆 | `me`(用户 FK)、`character`(角色 FK)、`memory`(长期记忆) |
+| `Message` | 每轮对话记录 | `friend`(FK)、`user_message`、`input`、`output`、`input_tokens` / `output_tokens` / `total_tokens` |
+| `SystemPrompt` | 全局提示词片段(按 `order_number` 排序拼接) | `title`(如「回复」「记忆」)、`order_number`、`prompt` |
+
+> `SystemPrompt` 是全局配置表,存放「回复」与「记忆」两类提示词模板,可在 Django Admin 后台维护,无需改代码即可调整 AI 的回复风格与记忆总结规则。
 
 ---
 
@@ -60,7 +97,7 @@ AI Friends 是一个基于大语言模型的前后端分离 Web 应用。用户�
 
 - Node.js 20.19+ 或 22.12+
 - Python 3.12+
-- 一个兼容 OpenAI 接口格式的大模型 API Key(推荐阿里云百炼,新用户有免费额度)
+- 一个兼容 OpenAI 接口格式的大模型 API Key(推荐阿里云百炼,新用户有免费额度;需同时支持对话模型与 `text-embedding-v4` 向量模型)
 
 ### 1. 后端配置与启动
 
@@ -112,7 +149,27 @@ Git 仓库只包含代码,不包含数据库、媒体文件和密钥,首次运�
 
 1. **注册账号**:直接在前端页面注册即可,注册流程会自动创建用户资料。
 2. **默认头像**:在 `backend/media/user/photos/` 下放置一张 `default.png` 作为默认头像,否则头像会显示为裂图。
-3. **后台管理(可选)**:`python manage.py createsuperuser` 创建管理员后可登录 `localhost:8000/admin`。注意:此命令创建的用户没有 UserProfile,请勿直接用它登录前端(或在 Django shell 中手动补建 UserProfile)。
+3. **提示词模板**:AI 的回复风格与记忆总结逻辑由 `SystemPrompt` 表驱动。请在 Django Admin 后台创建 `title='回复'` 与 `title='记忆'` 的提示词记录(可分多条,按 `order_number` 拼接),否则 AI 将缺少系统人设约束。
+4. **后台管理**:`python manage.py createsuperuser` 创建管理员后可登录 `localhost:8000/admin` 维护数据。注意:此命令创建的用户没有 UserProfile,请勿直接用它登录前端(或在 Django shell 中手动补建 UserProfile)。
+
+### 4. (可选)构建 RAG 知识库
+
+若要启用「检索知识库」工具:
+
+1. 将知识文本放入 `backend/web/documents/data.txt`(UTF-8 编码)。
+2. 在 `backend/` 目录下进入 Django shell 执行入库脚本:
+
+   ```powershell
+   python manage.py shell
+   ```
+   ```python
+   from web.documents.utils.insert_documents import insert_documents
+   insert_documents()   # 按 500 字切片、50 字重叠,写入 LanceDB(表名 my_knowledge_base)
+   ```
+
+   脚本会将文档切片、调用 `text-embedding-v4` 生成向量,并写入 `backend/web/documents/lancedb_storage`(每次运行为 `overwrite` 全量重建)。之后对话中问及知识库相关内容,Agent 会自动调用 `search_knowledge_base` 检索 Top-3 片段。
+
+> 注意:入库与检索均使用相对路径 `./web/documents/...`,请确保在 `backend/` 目录下启动进程。
 
 ---
 
@@ -124,20 +181,25 @@ Git 仓库只包含代码,不包含数据库、媒体文件和密钥,首次运�
 | pip 安装报 `UnicodeDecodeError` | requirements.txt 编码问题,用 VS Code 将其另存为 UTF-8 |
 | 登录提示"系统异常" | 检查后端是否在运行;若使用 createsuperuser 创建的账号,需先补建 UserProfile |
 | 头像显示裂图 | 缺少 `media/user/photos/default.png`,手动放置一张即可 |
+| AI 回复不遵循人设 / 记忆不更新 | 检查 `SystemPrompt` 表是否已配置 `title='回复'` 与 `title='记忆'` 的提示词 |
+| 知识库检索无结果 | 需先执行 `insert_documents()` 入库,且必须在 `backend/` 目录下启动后端 |
 | manage.py 命令长时间无输出 | 项目依赖较重,首次加载需 10~30 秒,耐心等待 |
 
 ---
 
 ## 📖 API 概览
 
+所有接口挂载在根路径下(无额外前缀),前端默认对接 `http://127.0.0.1:8000`。
+
 | 模块 | 核心端点 | 说明 |
 |------|------|------|
-| **账号** | `/api/user/account/...` | 注册、登录、登出、获取及刷新 Token、获取用户信息 |
-| **资料** | `/api/user/profile/...` | 修改个人资料与头像 |
-| **角色** | `/api/create/character/...` | 创建、查询、更新、删除自己的 AI 角色 |
-| **广场** | `/api/homepage/index/` | 分页浏览全站公开 AI 角色 |
-| **社交** | `/api/friend/...` | 添加 / 移除 AI 好友、获取好友列表 |
-| **对话** | `/api/message/chat/` | 发起 SSE 流式对话 |
+| **账号** | `POST /api/user/account/login/` `logout/` `register/` `refresh_token/`<br>`GET /api/user/account/get_user_info` | 注册、登录、登出、刷新 Token、获取用户信息 |
+| **资料** | `POST /api/user/profile/update/` | 修改个人资料与头像 |
+| **角色** | `POST /api/create/character/create/` `update/` `remove/`<br>`GET /api/create/character/get_single/` `get_list/` | 创建、更新、删除、查询自己的 AI 角色 |
+| **广场** | `GET /api/homepage/index/` | 分页浏览 / 搜索全站公开 AI 角色 |
+| **社交** | `POST /api/friend/get_or_create/` `remove/`<br>`GET /api/friend/get_list/` | 添加 / 移除 AI 好友、获取好友列表 |
+| **对话** | `POST /api/friend/message/chat/` | 发起 SSE 流式对话 |
+| **历史** | `GET /api/friend/message/get_history/` | 游标分页拉取历史消息 |
 
 ---
 
