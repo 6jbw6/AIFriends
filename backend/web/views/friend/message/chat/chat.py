@@ -39,7 +39,7 @@ def add_recent_messages(state,friend):
     for m in message_raw:
         messages.append(HumanMessage(m.user_message))
         messages.append(AIMessage(m.output))
-    return {'messages':msgs[:1]+messages+msgs[:-1]}
+    return {'messages':msgs[:1]+messages+msgs[-1:]}
 
 
 
