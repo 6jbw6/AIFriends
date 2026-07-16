@@ -11,8 +11,8 @@ from web.views.friend.get_or_create import GetOrCreateFriendView
 from web.views.friend.remove import RemoveFriendView
 from web.views.homepage.index import HomepageIndexView
 from web.views.index import index
-from web.views.message.chat.chat import MessageChatView
-from web.views.message.get_history import GetHistoryView
+from web.views.friend.message.chat.chat import MessageChatView
+from web.views.friend.message.get_history import GetHistoryView
 from web.views.user.account.get_user_info import GetUserInfoView
 from web.views.user.account.login import LoginView
 from web.views.user.account.logout import LogoutView

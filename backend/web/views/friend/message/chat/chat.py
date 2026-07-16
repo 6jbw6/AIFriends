@@ -5,14 +5,15 @@ from langchain_core.messages.ai import AIMessage
 from langchain_core.messages.system import SystemMessage
 
 from django.http import StreamingHttpResponse
-from langchain_core.messages import HumanMessage, BaseMessage, BaseMessageChunk
+from langchain_core.messages import HumanMessage, BaseMessageChunk
 from rest_framework.renderers import BaseRenderer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from web.models.friend import Friend, Message, SystemPrompt
-from web.views.message.chat.graph import ChatGraph
+from web.views.friend.message.chat.graph import ChatGraph
+from web.views.friend.message.memory.update import update_memory
 class SSERenderer(BaseRenderer):
     media_type = 'text/event-stream'
     format = 'txt'
@@ -26,6 +27,7 @@ def add_system_prompt(state,friend):
     for sp in system_prompts:
         prompt+=sp.prompt
     prompt+=f'\n[角色性格]\n{friend.character.profile}\n'
+    prompt+=f'\n[长期记忆]\n{friend.memory}\n'
     return {'messages':[SystemMessage(prompt)]+msgs}
 
 
@@ -89,6 +91,9 @@ class MessageChatView(APIView):
                 output_tokens=output_tokens,
                 total_tokens=total_tokens,
             )
+            if Message.objects.filter(friend=friend).count()%10==0:
+                update_memory(friend)
+
         response = StreamingHttpResponse(event_stream(), content_type="text/event-stream")
         response['Cache-Control'] = 'no-cache'
         return response
