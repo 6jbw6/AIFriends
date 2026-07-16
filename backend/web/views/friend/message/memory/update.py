@@ -34,7 +34,6 @@ def update_memory(friend):
             create_system_message()
         ]
     }
-    pprint(inputs)
     res=app.invoke(inputs)
     friend.memory=res['messages'][-1].content
     pprint(friend.memory)
