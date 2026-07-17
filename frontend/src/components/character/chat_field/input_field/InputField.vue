@@ -6,21 +6,34 @@ const inputRef=useTemplateRef('input-ref')
 const message=ref('')
 const props=defineProps(['friendId'])
 const emit=defineEmits(['pushBackMessage','addToLastMessage'])
-let isProcessing=false
+const showMic=ref(false)
+let processId=0
 function focus()
 {
   inputRef.value.focus()
 }
+function close()
+{
+  ++processId
+  showMic.value=false
+}
 defineExpose({
   focus,
+  close,
 })
 
-async function handleSend()
+async function handleSend(event,audio_msg)
 {
-  if(isProcessing) return
-  const content=message.value.trim()
+  let content
+  if(audio_msg)
+  {
+    content=audio_msg.trim()
+  }
+  else{
+    content=message.value.trim()
+  }
   if(!content) return
-  isProcessing=true
+  const curId=++processId
   message.value=''
 
   emit('pushBackMessage',{role:'user',content:content,id:crypto.randomUUID()})
@@ -37,29 +50,29 @@ async function handleSend()
                 },
             onmessage(data,isDone)
             {
-              if(isDone)
-              {
-                isProcessing=false
-              }
-              else if(data.content)
+              if(curId!==processId) return
+              if(data.content)
               {
                 emit('addToLastMessage',data.content)
               }
             },
             onerror(err)
             {
-                isProcessing=false
             },
           })
   }catch(err)
   {
-    isProcessing=false
   }
+}
+
+function handleStop()
+{
+  ++processId
 }
 </script>
 
 <template>
-<form @submit.prevent="handleSend" class="absolute bottom-4 left-2 h-12 w-86 flex items-center">
+<form v-if="!showMic" @submit.prevent="handleSend" class="absolute bottom-4 left-2 h-12 w-86 flex items-center">
   <input
       ref="input-ref"
       v-model="message"
@@ -71,10 +84,16 @@ async function handleSend()
   <div @click="handleSend" class="absolute right-2 w-8 h-8 flex justify-center items-center cursor-pointer ">
     <SendIcon/>
   </div>
-  <div class="absolute right-10 w-8 h-8 flex justify-center items-center cursor-pointer">
+  <div @click="showMic=true" class="absolute right-10 w-8 h-8 flex justify-center items-center cursor-pointer">
     <MicIcon/>
   </div>
 </form>
+  <MIcrophone
+      v-else
+      @close="showMic=false"
+      @send="handleSend"
+      @stop="handleStop"
+  />
 </template>
 
 <style scoped>
