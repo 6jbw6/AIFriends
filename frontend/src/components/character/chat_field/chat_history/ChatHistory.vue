@@ -1,14 +1,14 @@
 <script setup>
 import api from "@/js/http/api.js";
 
-const drops=defineProps(['history','friendId','character'])
+const props=defineProps(['history','friendId','character'])
 const scrollRef=useTemplateRef('scroll-ref')
 const emit=defineEmits(['pushFrontMessage'])
 const sentinelRef=useTemplateRef('sentinel-ref')
 let isLoading=false
 let hasMessages=true
 let lastMessageId=0
-async function loadNore()
+async function loadMore()
 {
   if(isLoading||!hasMessages) return
   isLoading=true

@@ -7,17 +7,38 @@ import Profile from "@/views/create/character/components/Profile.vue";
 import {base64ToFile} from "@/js/utils/base64_to_file.js";
 import api from "@/js/http/api.js";
 import {useUserStore} from "@/stores/user.js";
+import Voice from "@/views/create/character/components/Voice.vue";
 const photoRef=useTemplateRef('photo-ref')
 const nameRef=useTemplateRef('name-ref')
 const profileRef=useTemplateRef('profile-ref')
 const backgroundImageRef=useTemplateRef('background-image-ref')
+const voiceRef=useTemplateRef('voice-ref')
 const errorMessage=ref('')
 const router=useRouter()
 const user=useUserStore()
+const voices=ref([])
+const curVoiceId=ref(null)
+
+onMounted(async ()=>{
+  try{
+    const res=await api.get('/api/create/character/voice/get_list/',{})
+    const data=res.data
+    if(data.result==='success')
+    {
+      voices.value=data.voices
+      curVoiceId.value=data.voices[0].id
+    }
+  }catch(err)
+  {
+    console.log(err)
+  }
+})
+
 async function handleCreate()
 {
   const photo=photoRef.value.myPhoto
   const name=nameRef.value.myName?.trim()
+  const voice=voiceRef.value.myVoice
   const profile=profileRef.value.myProfile?.trim()
   const backgroundImage=backgroundImageRef.value.myBackgroundImage
   errorMessage.value=''
@@ -28,6 +49,10 @@ async function handleCreate()
   else if(!name)
   {
     errorMessage.value='名字不能为空'
+  }
+  else if(!voice)
+  {
+      errorMessage.value='音色不能为空'
   }
   else if(!profile)
   {
@@ -41,6 +66,7 @@ async function handleCreate()
   {
     const formData=new FormData()
     formData.append('name',name)
+    formData.append('voice_id',voice)
     formData.append('profile',profile)
     formData.append('photo',base64ToFile(photo,'photo.png'))
     formData.append('background_image',base64ToFile(backgroundImage,'background_image.png'))
@@ -78,6 +104,7 @@ async function handleCreate()
       <h3 class="text-lg font-bold my-4">创建角色</h3>
       <Photo ref="photo-ref"/>
       <Name ref="name-ref"/>
+      <Voice ref="voice-ref" :voices="voices" :curVoiceId="curVoiceId"/>
       <Profile ref="profile-ref"/>
       <BackgroundImage ref="background-image-ref"/>
       <p v-if="errorMessage" class="text-sm text-red-500">{{errorMessage}}</p>
