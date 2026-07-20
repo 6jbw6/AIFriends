@@ -24,7 +24,8 @@ AI Friends 是一个基于大语言模型的前后端分离 Web 应用。用户�
 - **🗣️ 语音交互 (ASR + TTS)**:
   - **语音输入**:前端集成 `@ricky0123/vad-web` 做浏览器端语音活动检测 (VAD),自动断句录音;音频 (PCM) 上传至后端,经 DashScope WebSocket 双工接口调用 `gummy-realtime-v1` 实时识别为文字。
   - **语音输出**:对话时 LLM 流式产生的文本块被同步推送给 TTS WebSocket 任务,合成的音频分片 (mp3, base64) 与文字通过同一条 SSE 流返回前端边播边显。
-  - **音色系统**:新增 `Voice` 模型维护音色库(Django Admin 配置),创建 / 更新角色时从音色库列表中自由选择,角色与音色绑定,对话语音按角色音色合成(TTS 模型 `cosyvoice-v3-flash`)。
+  - **音色系统**:新增 `Voice` 模型维护音色库(Django Admin 配置公共音色),创建 / 更新角色时从音色库列表中自由选择,角色与音色绑定,对话语音按角色音色合成(TTS 模型 `cosyvoice-v3-flash`)。
+  - **音色复刻**:创建 / 更新角色页支持上传音频或浏览器在线录音(MediaRecorder 录制,前端重编码为 16-bit 单声道 WAV),经 DashScope `voice-enrollment` 接口复刻为用户专属音色;自定义音色仅本人可见、可删除(被角色占用时禁止删除),每人上限 10 个,单个音频上限 10MB(wav / mp3 / m4a / aac)。
 
 ---
 
@@ -88,7 +89,7 @@ LangGraph ReAct Agent ──► [agent 节点] ChatOpenAI(deepseek-v4-pro, strea
 | 模型 | 说明 | 关键字段 |
 |------|------|------|
 | `UserProfile` | 用户资料,与 Django `User` 一对一关联 | `photo`(头像)、`profile`(简介) |
-| `Voice` | TTS 音色库(Admin 后台维护) | `name`(展示名)、`voice_id`(云端音色 ID,须与 TTS 模型匹配) |
+| `Voice` | TTS 音色库(公共音色 Admin 后台维护,自定义音色由用户复刻生成) | `name`(展示名)、`voice_id`(云端音色 ID,须与 TTS 模型匹配)、`owner`(为空表示公共音色,否则为音色主人 FK)、`audio`(复刻源音频) |
 | `Character` | AI 角色 | `author`(创作者 FK)、`name`、`profile`(人设)、`voice`(音色 FK)、`photo`、`background_image` |
 | `Friend` | 用户与角色的好友关系,承载专属长期记忆 | `me`(用户 FK)、`character`(角色 FK)、`memory`(长期记忆) |
 | `Message` | 每轮对话记录 | `friend`(FK)、`user_message`、`input`、`output`、`input_tokens` / `output_tokens` / `total_tokens` |
@@ -161,7 +162,8 @@ Git 仓库只包含代码,不包含数据库、媒体文件和密钥,首次运�
 2. **默认头像**:在 `backend/media/user/photos/` 下放置一张 `default.png` 作为默认头像,否则头像会显示为裂图。
 3. **提示词模板**:AI 的回复风格与记忆总结逻辑由 `SystemPrompt` 表驱动。请在 Django Admin 后台创建 `title='回复'` 与 `title='记忆'` 的提示词记录(可分多条,按 `order_number` 拼接),否则 AI 将缺少系统人设约束。
 4. **音色库**:在 Django Admin 后台的 `Voice` 表中至少创建一条音色记录(`name` 为展示名,`voice_id` 为云端音色 ID,如 CosyVoice 的 `longanyang`),否则创建角色页的音色下拉为空、无法完成创建。注意 `voice_id` 必须属于 `chat.py` 中 TTS 任务所指定模型的音色列表,否则语音合成会报 `InvalidParameter`。
-5. **后台管理**:`python manage.py createsuperuser` 创建管理员后可登录 `localhost:8000/admin` 维护数据。注意:此命令创建的用户没有 UserProfile,请勿直接用它登录前端(或在 Django shell 中手动补建 UserProfile)。
+5. **音色复刻**:「复刻我的音色」功能要求 DashScope 服务器能通过 `MEDIA_URL` 下载到上传的音频,因此**只能在公网可访问的部署环境下生效**——本地开发时 `MEDIA_URL` 指向 `127.0.0.1`,复刻请求会失败(可用内网穿透临时验证)。同时反向代理需放行足够大的请求体(如 nginx 配置 `client_max_body_size 20m;`),否则上传会报 413。
+6. **后台管理**:`python manage.py createsuperuser` 创建管理员后可登录 `localhost:8000/admin` 维护数据。注意:此命令创建的用户没有 UserProfile,请勿直接用它登录前端(或在 Django shell 中手动补建 UserProfile)。
 
 ### 4. (可选)构建 RAG 知识库
 
@@ -198,6 +200,8 @@ Git 仓库只包含代码,不包含数据库、媒体文件和密钥,首次运�
 | 文字回复正常但没有语音 / 报 `1007 InvalidParameter` | `voice_id` 与 TTS 模型不匹配(音色须属于 `chat.py` 指定的 `cosyvoice-v3-flash` 的音色列表) |
 | 对话无任何回复(整条为空) | `.env` 缺少 `WSS_URL`(文字流也经由 TTS WebSocket 任务转发),或 API Key 无 DashScope 语音服务权限 |
 | 麦克风不可用(部署后) | 浏览器 `getUserMedia` 仅在 HTTPS 或 localhost 下可用,生产环境必须配置 HTTPS |
+| 音色复刻提示"网络异常" / 接口报 413 | 反向代理请求体上限过小,nginx 配置 `client_max_body_size 20m;` 后重载 |
+| 音色复刻提示"复刻失败" | DashScope 无法下载音频:本地开发环境 `MEDIA_URL` 为 `127.0.0.1` 时必然失败,需部署到公网环境;或检查 `.env` 中 `VOICE_URL` 与 API Key 权限 |
 | manage.py 命令长时间无输出 | 项目依赖较重,首次加载需 10~30 秒,耐心等待 |
 
 ---
@@ -211,7 +215,7 @@ Git 仓库只包含代码,不包含数据库、媒体文件和密钥,首次运�
 | **账号** | `POST /api/user/account/login/` `logout/` `register/` `refresh_token/`<br>`GET /api/user/account/get_user_info` | 注册、登录、登出、刷新 Token、获取用户信息 |
 | **资料** | `POST /api/user/profile/update/` | 修改个人资料与头像 |
 | **角色** | `POST /api/create/character/create/` `update/` `remove/`<br>`GET /api/create/character/get_single/` `get_list/` | 创建、更新、删除、查询自己的 AI 角色 |
-| **音色** | `GET /api/create/character/voice/get_list/` | 获取可选音色列表(创建角色时选择) |
+| **音色** | `GET /api/create/character/voice/get_list/`<br>`POST /api/create/character/voice/create_custom/` `remove_custom/` | 获取可选音色列表(公共 + 本人自定义);上传 / 录制音频复刻自定义音色、删除自定义音色 |
 | **广场** | `GET /api/homepage/index/` | 分页浏览 / 搜索全站公开 AI 角色 |
 | **社交** | `POST /api/friend/get_or_create/` `remove/`<br>`GET /api/friend/get_list/` | 添加 / 移除 AI 好友、获取好友列表 |
 | **对话** | `POST /api/friend/message/chat/` | 发起 SSE 流式对话,返回文本块与 TTS 音频分片 (base64 mp3) |

@@ -59,7 +59,7 @@ async function loadMore()
       scrollRef.value.scrollTop=oldTop+newHeight-oldHeight
       if(checkSentinelVisible())
       {
-        await loadNore()
+        await loadMore()
       }
     }
   }

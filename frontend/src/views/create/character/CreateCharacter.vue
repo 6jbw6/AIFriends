@@ -34,6 +34,18 @@ onMounted(async ()=>{
   }
 })
 
+function onVoiceCreated(voice)
+{
+  voices.value.push(voice)
+  curVoiceId.value=voice.id
+}
+
+function onVoiceDeleted(voiceId)
+{
+  voices.value=voices.value.filter(v=>v.id!==voiceId)
+  curVoiceId.value=voices.value[0]?.id??null
+}
+
 async function handleCreate()
 {
   const photo=photoRef.value.myPhoto
@@ -104,7 +116,7 @@ async function handleCreate()
       <h3 class="text-lg font-bold my-4">创建角色</h3>
       <Photo ref="photo-ref"/>
       <Name ref="name-ref"/>
-      <Voice ref="voice-ref" :voices="voices" :curVoiceId="curVoiceId"/>
+      <Voice ref="voice-ref" :voices="voices" :curVoiceId="curVoiceId" @created="onVoiceCreated" @deleted="onVoiceDeleted"/>
       <Profile ref="profile-ref"/>
       <BackgroundImage ref="background-image-ref"/>
       <p v-if="errorMessage" class="text-sm text-red-500">{{errorMessage}}</p>

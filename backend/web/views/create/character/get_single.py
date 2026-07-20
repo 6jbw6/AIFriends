@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -11,12 +12,13 @@ class GetSingleCharacterView(APIView):
         try:
             character_id=request.query_params.get('character_id')
             character=Character.objects.get(id=character_id,author__user=request.user)
-            voices_raw=Voice.objects.order_by('id')
+            voices_raw=Voice.objects.filter(Q(owner__isnull=True)|Q(owner__user=request.user)).order_by('id')
             voices = []
             for v in voices_raw:
                 voices.append({
                     'id': v.id,
                     'name': v.name,
+                    'is_custom': v.owner_id is not None,
                 })
 
             return Response({

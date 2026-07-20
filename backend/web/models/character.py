@@ -15,9 +15,16 @@ def background_image_upload_to(instance, filename):
     filename = f'{uuid.uuid4().hex[:10]}.{ext}'
     return f'character/background_image/{instance.author.user_id}_{filename}'
 
+def voice_audio_upload_to(instance, filename):
+    ext = filename.split('.')[-1]
+    filename = f'{uuid.uuid4().hex[:10]}.{ext}'
+    return f'character/voices/{filename}'
+
 class Voice(models.Model):
     name=models.CharField(max_length=100)
     voice_id=models.CharField(max_length=100)
+    owner=models.ForeignKey(UserProfile,default=None,on_delete=models.CASCADE,blank=True,null=True)
+    audio=models.FileField(upload_to=voice_audio_upload_to,blank=True,null=True)
     create_time=models.DateTimeField(default=now)
 
     def __str__(self):

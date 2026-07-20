@@ -58,6 +58,7 @@ function handleClose()
         :history="history"
         :friendId="friend.id"
         :character="friend.character"
+        @pushFrontMessage="handlePushFrontMessage"
     />
     <InputField
         v-if="friend"
