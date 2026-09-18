@@ -6,8 +6,6 @@ AI Friends 是一个基于大语言模型的前后端分离 Web 应用。用户�
 
 > 本项目为个人学习项目,全部代码手写完成,用于系统学习 LLM 应用开发(LangChain / LangGraph / Agent / RAG / 流式传输)与全栈工程实践。
 
-**<img src="frontend/public/favicon.svg" height="16" align="top" alt="AI Friends logo"> 在线体验**:[https://app7917.acapp.acwing.com.cn/](https://app7917.acapp.acwing.com.cn/)
-
 ---
 
 ## ✨ 功能特性
